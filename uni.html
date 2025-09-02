@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US News Top 50 Universities</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#64748b',
+                        accent: '#f97316',
+                        light: '#f8fafc',
+                        dark: '#1e293b'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            }
+            .hover-lift {
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+            }
+            .hover-lift:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-dark">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-md sticky top-0 z-50 transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center mb-4 md:mb-0">
+                <i class="fa fa-graduation-cap text-primary text-3xl mr-3"></i>
+                <h1 class="text-2xl font-bold text-dark">US News Top 50 Universities</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <input type="text" id="search-input" placeholder="搜索大学..." 
+                           class="pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 w-48 md:w-64 transition-all">
+                    <i class="fa fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                </div>
+                <button id="toggle-view" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+                    <i class="fa fa-th-large text-gray-600"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 介绍部分 -->
+        <section class="mb-12 text-center">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4 text-dark">2024年美国大学排名前50名</h2>
+            <p class="text-secondary max-w-3xl mx-auto text-lg">
+                以下是根据《美国新闻与世界报道》(US News)发布的2024年美国最佳大学排名前50名的名单，
+                包含各大学的排名、名称、所在地及官方网站链接。
+            </p>
+        </section>
+
+        <!-- 筛选和排序选项 -->
+        <section class="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex flex-wrap gap-2">
+                <button class="filter-btn active px-4 py-2 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors">
+                    全部
+                </button>
+                <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 text-dark hover:bg-gray-300 transition-colors">
+                    常春藤盟校
+                </button>
+                <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 text-dark hover:bg-gray-300 transition-colors">
+                    公立大学
+                </button>
+                <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 text-dark hover:bg-gray-300 transition-colors">
+                    私立大学
+                </button>
+            </div>
+            
+            <div class="relative">
+                <select id="sort-select" class="appearance-none pl-4 pr-10 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 bg-white">
+                    <option value="rank">按排名排序</option>
+                    <option value="name-asc">按名称(A-Z)</option>
+                    <option value="name-desc">按名称(Z-A)</option>
+                </select>
+                <i class="fa fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+            </div>
+        </section>
+
+        <!-- 大学列表 - 网格视图 -->
+        <section id="universities-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- 大学卡片将通过JavaScript动态生成 -->
+        </section>
+
+        <!-- 大学列表 - 列表视图 (默认隐藏) -->
+        <section id="universities-list" class="hidden space-y-4">
+            <!-- 大学列表项将通过JavaScript动态生成 -->
+        </section>
+
+        <!-- 加载状态 -->
+        <div id="loading" class="flex justify-center items-center py-16">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+
+        <!-- 无结果状态 -->
+        <div id="no-results" class="hidden text-center py-16">
+            <i class="fa fa-search text-5xl text-gray-300 mb-4"></i>
+            <p class="text-xl text-gray-500">未找到匹配的大学</p>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-12 mt-16">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <div class="flex items-center">
+                        <i class="fa fa-graduation-cap text-primary text-2xl mr-2"></i>
+                        <h3 class="text-xl font-bold">US News Top 50 Universities</h3>
+                    </div>
+                    <p class="text-gray-400 mt-2">数据来源: 《美国新闻与世界报道》(US News)</p>
+                </div>
+                
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-facebook text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-instagram text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-linkedin text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <hr class="border-gray-700 my-8">
+            
+            <div class="text-center text-gray-400">
+                <p>&copy; 2024 US News Top Universities. 保留所有权利。</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 最新US News排名前50的大学数据（包含官网链接）
+        const universities = [
+            { rank: 1, name: "Princeton University", location: "Princeton, NJ", type: "private", ivy: true, website: "https://www.princeton.edu" },
+            { rank: 2, name: "Massachusetts Institute of Technology", location: "Cambridge, MA", type: "private", ivy: false, website: "https://web.mit.edu" },
+            { rank: 3, name: "Harvard University", location: "Cambridge, MA", type: "private", ivy: true, website: "https://www.harvard.edu" },
+            { rank: 4, name: "Stanford University", location: "Stanford, CA", type: "private", ivy: false, website: "https://www.stanford.edu" },
+            { rank: 5, name: "Yale University", location: "New Haven, CT", type: "private", ivy: true, website: "https://www.yale.edu" },
+            { rank: 6, name: "California Institute of Technology", location: "Pasadena, CA", type: "private", ivy: false, website: "https://www.caltech.edu" },
+            { rank: 6, name: "Duke University", location: "Durham, NC", type: "private", ivy: false, website: "https://www.duke.edu" },
+            { rank: 6, name: "Johns Hopkins University", location: "Baltimore, MD", type: "private", ivy: false, website: "https://www.jhu.edu" },
+            { rank: 6, name: "Northwestern University", location: "Evanston, IL", type: "private", ivy: false, website: "https://www.northwestern.edu" },
+            { rank: 10, name: "University of Pennsylvania", location: "Philadelphia, PA", type: "private", ivy: true, website: "https://www.upenn.edu" },
+            { rank: 11, name: "Cornell University", location: "Ithaca, NY", type: "private", ivy: true, website: "https://www.cornell.edu" },
+            { rank: 11, name: "University of Chicago", location: "Chicago, IL", type: "private", ivy: false, website: "https://www.uchicago.edu" },
+            { rank: 13, name: "Brown University", location: "Providence, RI", type: "private", ivy: true, website: "https://www.brown.edu" },
+            { rank: 13, name: "Columbia University", location: "New York, NY", type: "private", ivy: true, website: "https://www.columbia.edu" },
+            { rank: 15, name: "Dartmouth College", location: "Hanover, NH", type: "private", ivy: true, website: "https://www.dartmouth.edu" },
+            { rank: 15, name: "University of California, Los Angeles (UCLA)", location: "Los Angeles, CA", type: "public", ivy: false, website: "https://www.ucla.edu" },
+            { rank: 17, name: "University of California, Berkeley", location: "Berkeley, CA", type: "public", ivy: false, website: "https://www.berkeley.edu" },
+            { rank: 18, name: "University of Notre Dame", location: "Notre Dame, IN", type: "private", ivy: false, website: "https://www.nd.edu" },
+            { rank: 18, name: "Rice University", location: "Houston, TX", type: "private", ivy: false, website: "https://www.rice.edu" },
+            { rank: 18, name: "Vanderbilt University", location: "Nashville, TN", type: "private", ivy: false, website: "https://www.vanderbilt.edu" },
+            { rank: 21, name: "Carnegie Mellon University", location: "Pittsburgh, PA", type: "private", ivy: false, website: "https://www.cmu.edu" },
+            { rank: 21, name: "University of Michigan—Ann Arbor", location: "Ann Arbor, MI", type: "public", ivy: false, website: "https://www.umich.edu" },
+            { rank: 21, name: "Washington University in St. Louis", location: "St. Louis, MO", type: "private", ivy: false, website: "https://wustl.edu" },
+            { rank: 24, name: "Emory University", location: "Atlanta, GA", type: "private", ivy: false, website: "https://www.emory.edu" },
+            { rank: 24, name: "Georgetown University", location: "Washington, DC", type: "private", ivy: false, website: "https://www.georgetown.edu" },
+            { rank: 24, name: "University of Virginia", location: "Charlottesville, VA", type: "public", ivy: false, website: "https://www.virginia.edu" },
+            { rank: 27, name: "University of North Carolina at Chapel Hill", location: "Chapel Hill, NC", type: "public", ivy: false, website: "https://www.unc.edu" },
+            { rank: 27, name: "University of Southern California", location: "Los Angeles, CA", type: "private", ivy: false, website: "https://www.usc.edu" },
+            { rank: 29, name: "University of California, San Diego", location: "La Jolla, CA", type: "public", ivy: false, website: "https://ucsd.edu" },
+            { rank: 30, name: "New York University", location: "New York, NY", type: "private", ivy: false, website: "https://www.nyu.edu" },
+            { rank: 30, name: "University of Florida", location: "Gainesville, FL", type: "public", ivy: false, website: "https://www.ufl.edu" },
+            { rank: 30, name: "University of Texas at Austin", location: "Austin, TX", type: "public", ivy: false, website: "https://www.utexas.edu" },
+            { rank: 33, name: "Georgia Institute of Technology", location: "Atlanta, GA", type: "public", ivy: false, website: "https://www.gatech.edu" },
+            { rank: 33, name: "University of California, Davis", location: "Davis, CA", type: "public", ivy: false, website: "https://www.ucdavis.edu" },
+            { rank: 33, name: "University of California, Irvine", location: "Irvine, CA", type: "public", ivy: false, website: "https://www.uci.edu" },
+            { rank: 33, name: "University of Illinois Urbana-Champaign", location: "Champaign, IL", type: "public", ivy: false, website: "https://illinois.edu" },
+            { rank: 37, name: "Boston College", location: "Chestnut Hill, MA", type: "private", ivy: false, website: "https://www.bc.edu" },
+            { rank: 37, name: "Tufts University", location: "Medford, MA", type: "private", ivy: false, website: "https://www.tufts.edu" },
+            { rank: 39, name: "University of California, Santa Barbara", location: "Santa Barbara, CA", type: "public", ivy: false, website: "https://www.ucsb.edu" },
+            { rank: 39, name: "University of Wisconsin—Madison", location: "Madison, WI", type: "public", ivy: false, website: "https://www.wisc.edu" },
+            { rank: 41, name: "Boston University", location: "Boston, MA", type: "private", ivy: false, website: "https://www.bu.edu" },
+            { rank: 41, name: "Ohio State University", location: "Columbus, OH", type: "public", ivy: false, website: "https://www.osu.edu" },
+            { rank: 41, name: "Rutgers University—New Brunswick", location: "New Brunswick, NJ", type: "public", ivy: false, website: "https://www.rutgers.edu" },
+            { rank: 44, name: "University of Maryland—College Park", location: "College Park, MD", type: "public", ivy: false, website: "https://www.umd.edu" },
+            { rank: 44, name: "University of Rochester", location: "Rochester, NY", type: "private", ivy: false, website: "https://www.rochester.edu" },
+            { rank: 46, name: "Lehigh University", location: "Bethlehem, PA", type: "private", ivy: false, website: "https://www.lehigh.edu" },
+            { rank: 46, name: "Purdue University", location: "West Lafayette, IN", type: "public", ivy: false, website: "https://www.purdue.edu" },
+            { rank: 46, name: "University of Georgia", location: "Athens, GA", type: "public", ivy: false, website: "https://www.uga.edu" },
+            { rank: 46, name: "University of Washington", location: "Seattle, WA", type: "public", ivy: false, website: "https://www.washington.edu" },
+            { rank: 46, name: "Wake Forest University", location: "Winston-Salem, NC", type: "private", ivy: false, website: "https://www.wfu.edu" }
+        ];
+
+        // DOM 元素
+        const gridContainer = document.getElementById('universities-grid');
+        const listContainer = document.getElementById('universities-list');
+        const loadingIndicator = document.getElementById('loading');
+        const noResultsIndicator = document.getElementById('no-results');
+        const searchInput = document.getElementById('search-input');
+        const toggleViewBtn = document.getElementById('toggle-view');
+        const sortSelect = document.getElementById('sort-select');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const navbar = document.getElementById('navbar');
+
+        // 状态变量
+        let currentView = 'grid';
+        let currentFilter = 'all';
+        let currentSort = 'rank';
+        let filteredUniversities = [...universities];
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', () => {
+            renderUniversities();
+            
+            // 滚动事件监听 - 改变导航栏样式
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('py-2');
+                    navbar.classList.remove('py-4');
+                } else {
+                    navbar.classList.add('py-4');
+                    navbar.classList.remove('py-2');
+                }
+            });
+        });
+
+        // 渲染大学列表
+        function renderUniversities() {
+            // 显示加载状态
+            loadingIndicator.classList.remove('hidden');
+            gridContainer.innerHTML = '';
+            listContainer.innerHTML = '';
+            noResultsIndicator.classList.add('hidden');
+
+            // 模拟加载延迟
+            setTimeout(() => {
+                // 应用筛选
+                let results = applyFilters();
+                
+                // 应用排序
+                results = applySorting(results);
+
+                // 检查是否有结果
+                if (results.length === 0) {
+                    noResultsIndicator.classList.remove('hidden');
+                    loadingIndicator.classList.add('hidden');
+                    return;
+                }
+
+                // 生成网格视图内容
+                results.forEach(university => {
+                    // 网格视图卡片
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-xl overflow-hidden card-shadow hover-lift';
+                    
+                    // 排名标签
+                    const rankBadge = document.createElement('div');
+                    rankBadge.className = `absolute top-0 left-0 px-3 py-1 text-white font-bold text-lg`;
+                    rankBadge.style.backgroundColor = university.ivy ? '#8B4513' : '#3b82f6';
+                    rankBadge.textContent = `#${university.rank}`;
+                    
+                    // 卡片内容
+                    card.innerHTML = `
+                        <div class="p-6 relative">
+                            ${university.ivy ? '<span class="absolute top-2 right-2 bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded">常春藤盟校</span>' : ''}
+                            <h3 class="text-xl font-bold mb-2 mt-1">${university.name}</h3>
+                            <div class="flex items-center text-secondary mb-3">
+                                <i class="fa fa-map-marker mr-2"></i>
+                                <span>${university.location}</span>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-500 mb-4">
+                                <span class="px-2 py-1 rounded-full bg-gray-100">${university.type === 'public' ? '公立大学' : '私立大学'}</span>
+                            </div>
+                            <a href="${university.website}" target="_blank" class="inline-flex items-center text-primary hover:text-primary/80 font-medium transition-colors">
+                                <i class="fa fa-globe mr-2"></i>
+                                访问官网
+                            </a>
+                        </div>
+                    `;
+                    
+                    // 添加排名标签到卡片
+                    const cardContent = card.querySelector('.p-6');
+                    cardContent.appendChild(rankBadge);
+                    
+                    gridContainer.appendChild(card);
+
+                    // 列表视图项
+                    const listItem = document.createElement('div');
+                    listItem.className = 'bg-white rounded-lg p-4 card-shadow hover-lift flex flex-col sm:flex-row justify-between items-start sm:items-center';
+                    listItem.innerHTML = `
+                        <div class="flex items-start mb-3 sm:mb-0">
+                            <div class="mr-4 text-lg font-bold ${university.ivy ? 'text-amber-700' : 'text-primary'}">
+                                #${university.rank}
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg">${university.name}</h3>
+                                <div class="flex items-center text-secondary text-sm">
+                                    <i class="fa fa-map-marker mr-1"></i>
+                                    <span>${university.location}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4 w-full sm:w-auto justify-between sm:justify-end">
+                            <span class="px-2 py-1 rounded-full bg-gray-100 text-sm">${university.type === 'public' ? '公立大学' : '私立大学'}</span>
+                            <a href="${university.website}" target="_blank" class="text-primary hover:text-primary/80 transition-colors">
+                                <i class="fa fa-globe mr-1"></i>官网
+                            </a>
+                        </div>
+                    `;
+                    
+                    listContainer.appendChild(listItem);
+                });
+
+                // 隐藏加载状态
+                loadingIndicator.classList.add('hidden');
+            }, 300);
+        }
+
+        // 应用筛选
+        function applyFilters() {
+            let results = [...universities];
+            
+            // 搜索筛选
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            if (searchTerm) {
+                results = results.filter(university => 
+                    university.name.toLowerCase().includes(searchTerm) || 
+                    university.location.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // 类型筛选
+            if (currentFilter === 'ivy') {
+                results = results.filter(university => university.ivy);
+            } else if (currentFilter === 'public') {
+                results = results.filter(university => university.type === 'public');
+            } else if (currentFilter === 'private') {
+                results = results.filter(university => university.type === 'private');
+            }
+            
+            return results;
+        }
+
+        // 应用排序
+        function applySorting(results) {
+            switch(currentSort) {
+                case 'name-asc':
+                    return [...results].sort((a, b) => a.name.localeCompare(b.name));
+                case 'name-desc':
+                    return [...results].sort((a, b) => b.name.localeCompare(a.name));
+                case 'rank':
+                default:
+                    return [...results].sort((a, b) => a.rank - b.rank);
+            }
+        }
+
+        // 事件监听器 - 搜索
+        searchInput.addEventListener('input', renderUniversities);
+
+        // 事件监听器 - 切换视图
+        toggleViewBtn.addEventListener('click', () => {
+            currentView = currentView === 'grid' ? 'list' : 'grid';
+            
+            if (currentView === 'grid') {
+                gridContainer.classList.remove('hidden');
+                listContainer.classList.add('hidden');
+                toggleViewBtn.innerHTML = '<i class="fa fa-th-large text-gray-600"></i>';
+            } else {
+                gridContainer.classList.add('hidden');
+                listContainer.classList.remove('hidden');
+                toggleViewBtn.innerHTML = '<i class="fa fa-list text-gray-600"></i>';
+            }
+        });
+
+        // 事件监听器 - 排序
+        sortSelect.addEventListener('change', () => {
+            currentSort = sortSelect.value;
+            renderUniversities();
+        });
+
+        // 事件监听器 - 筛选按钮
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 更新按钮样式
+                filterBtns.forEach(b => {
+                    b.classList.remove('active', 'bg-primary', 'text-white');
+                    b.classList.add('bg-gray-200', 'text-dark');
+                });
+                
+                btn.classList.add('active', 'bg-primary', 'text-white');
+                btn.classList.remove('bg-gray-200', 'text-dark');
+                
+                // 设置当前筛选条件
+                if (btn.textContent.includes('常春藤')) {
+                    currentFilter = 'ivy';
+                } else if (btn.textContent.includes('公立')) {
+                    currentFilter = 'public';
+                } else if (btn.textContent.includes('私立')) {
+                    currentFilter = 'private';
+                } else {
+                    currentFilter = 'all';
+                }
+                
+                renderUniversities();
+            });
+        });
+    </script>
+</body>
+</html>
